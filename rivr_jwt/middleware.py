@@ -1,5 +1,7 @@
+from typing import Dict, Any, Optional
 import jwt
 from rivr import Middleware
+from rivr.http import Request, Response
 
 
 class JWTMiddleware(Middleware):
@@ -12,33 +14,44 @@ class JWTMiddleware(Middleware):
     header_name = 'AUTHORIZATION'
     header_grant_type = 'Bearer'
 
-    def create_jwt(self, payload):
+    def create_jwt(self, payload: Dict[str, Any]):
         """
         Creates a JWT from the given payload.
         """
+        if not self.key:
+            raise Exception('Missing key')
+
         return jwt.encode(payload, self.key, algorithm=self.algorithms[0])
 
-    def verify_jwt(self, encoded_jwt):
+    def verify_jwt(self, encoded_jwt: str):
         """
         Verifies the given JWT token, returning the decoded object, or None.
         """
+
+        if not self.key:
+            raise Exception('Missing key')
+
         return jwt.decode(encoded_jwt, self.key, algorithms=self.algorithms)
 
-    def process_request(self, request):
-        request.browserid_middleware = self
+    def process_request(self, request: Request) -> Optional[Response]:
+        setattr(request, 'browserid_middleware', self)
 
-        if self.header_name in request.headers:
-            bearer, token = request.headers[self.header_name].split(' ', 1)
-            request.jwt = self.verify_jwt(token)
-        elif getattr(request, 'COOKIES', None) and self.cookie_name in request.COOKIES:
-            request.jwt = self.verify_jwt(request.COOKIES[self.cookie_name])
+        header = request.headers[self.header_name]
+        if header:
+            bearer, token = header.split(' ', 1)
+            setattr(request, 'jwt', self.verify_jwt(token))
+        elif self.cookie_name in request.cookies:
+            setattr(request, 'jwt', self.verify_jwt(request.cookies[self.cookie_name].value))
         else:
-            request.jwt = None
+            setattr(request, 'jwt', None)
 
-    def process_response(self, request, response):
+        return None
+
+    def process_response(self, request: Request, response: Response) -> Response:
         if hasattr(response, 'jwt_cookie'):
-            if response.jwt_cookie:
-                encoded_jwt = self.create_jwt(response.jwt_cookie)
+            jwt_cookie = getattr(response, 'jwt_cookie')
+            if jwt_cookie:
+                encoded_jwt = self.create_jwt(jwt_cookie)
                 response.set_cookie(self.cookie_name, encoded_jwt.decode('utf-8'), secure=self.cookie_secure)
             else:
                 response.delete_cookie(self.cookie_name)

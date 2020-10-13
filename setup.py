@@ -8,6 +8,9 @@ setup(
     description='Making authentication with JWT (JSON Web Token) and rivr simple.',
     url='https://github.com/rivrproject/rivr-jwt',
     packages=find_packages(),
+    package_data={
+        'rivr_jwt': ['py.typed'],
+    },
     install_requires=[
         'rivr',
         'PyJWT',
@@ -16,12 +19,11 @@ setup(
     author_email='kyle@fuller.li',
     license='BSD',
     classifiers=(
-      'Programming Language :: Python :: 2',
-      'Programming Language :: Python :: 2.7',
       'Programming Language :: Python :: 3',
-      'Programming Language :: Python :: 3.2',
-      'Programming Language :: Python :: 3.3',
-      'Programming Language :: Python :: 3.4',
+      'Programming Language :: Python :: 3.6',
+      'Programming Language :: Python :: 3.7',
+      'Programming Language :: Python :: 3.8',
+      'Programming Language :: Python :: 3.9',
       'License :: OSI Approved :: BSD License',
     )
 )

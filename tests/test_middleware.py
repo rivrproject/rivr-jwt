@@ -24,7 +24,7 @@ class JWTMiddlewareTests(unittest.TestCase):
 
     def test_decodes_request_cookie(self):
         request = Request()
-        request.COOKIES = {'jwt': self.jwt}
+        request.cookies['jwt'] = self.jwt
         self.middleware.process_request(request)
 
         self.assertEqual(request.jwt, {'name': 'Kyle'})

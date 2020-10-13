@@ -1,7 +1,5 @@
 # rivr-jwt
 
-[![Build Status](http://img.shields.io/travis/rivrproject/rivr-jwt/master.svg?style=flat)](https://travis-ci.org/rivrproject/rivr-jwt)
-
 A library for using JSON Web Tokens (JWT) for authentication with [rivr](https://github.com/rivrproject/rivr).
 
 ## Installation

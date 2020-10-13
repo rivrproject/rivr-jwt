@@ -1,0 +1,17 @@
+on: push
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8, 3.9]
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install -e .
+      - run: python -m pip install pytest pytest-cov pytest-mypy
+      - run: python -m pip install -e git+https://github.com/rivrproject/rivr.git#egg=rivr
+      - run: pytest --cov=rivr_jwt --mypy rivr_jwt tests

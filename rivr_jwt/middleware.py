@@ -39,9 +39,8 @@ class JWTMiddleware(Middleware):
         if hasattr(response, 'jwt_cookie'):
             if response.jwt_cookie:
                 encoded_jwt = self.create_jwt(response.jwt_cookie)
-                response.set_cookie(self.cookie_name, encoded_jwt, secure=self.cookie_secure)
+                response.set_cookie(self.cookie_name, encoded_jwt.decode('utf-8'), secure=self.cookie_secure)
             else:
                 response.delete_cookie(self.cookie_name)
 
         return response
-

@@ -6,7 +6,7 @@ from rivr_jwt import JWTMiddleware
 class JWTMiddlewareTests(unittest.TestCase):
     def setUp(self):
         self.middleware = JWTMiddleware(key='secret')
-        self.jwt = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiS3lsZSJ9.zxm7xcp1eZtZhp4t-nlw09ATQnnFKIiSN83uG8u6cAg'
+        self.jwt = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoiS3lsZSJ9.4tCpoxfyfjbUyLjm9_zu-r52Vxn6bFq9kp6Rt9xMs4A'
 
     def test_sets_jwt_to_none_when_not_provided(self):
         request = Request()
@@ -43,4 +43,3 @@ class JWTMiddlewareTests(unittest.TestCase):
 
         self.assertEqual(response.cookies['jwt'].value, '')
         self.assertEqual(response.cookies['jwt']['expires'], 'Thu, 01-Jan-1970 00:00:00 GMT')
-

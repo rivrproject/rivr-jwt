@@ -12,7 +12,7 @@ setup(
         'rivr_jwt': ['py.typed'],
     },
     install_requires=[
-        'rivr',
+        'rivr@git+https://github.com/rivrproject/rivr.git',
         'PyJWT',
     ],
     author='Kyle Fuller',

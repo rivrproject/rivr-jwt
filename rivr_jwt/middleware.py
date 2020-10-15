@@ -1,4 +1,4 @@
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Sequence
 import jwt
 from rivr import Middleware
 from rivr.http import Request, Response
@@ -7,6 +7,9 @@ from rivr.http import Request, Response
 class JWTMiddleware(Middleware):
     algorithms = ('HS256',)
     key = None
+
+    audience: Optional[Sequence[str]] = None
+    issuer: Optional[str] = None
 
     cookie_name = 'jwt'
     cookie_secure = False
@@ -31,17 +34,26 @@ class JWTMiddleware(Middleware):
         if not self.key:
             raise Exception('Missing key')
 
-        return jwt.decode(encoded_jwt, self.key, algorithms=self.algorithms)
+        return jwt.decode(
+            encoded_jwt,
+            self.key,
+            audience=self.audience,
+            issuer=self.issuer,
+            algorithms=self.algorithms,
+        )
 
     def process_request(self, request: Request) -> Optional[Response]:
         setattr(request, 'browserid_middleware', self)
+        setattr(request, 'jwt', None)
 
         header = request.headers[self.header_name]
         if header:
             bearer, token = header.split(' ', 1)
             setattr(request, 'jwt', self.verify_jwt(token))
         elif self.cookie_name in request.cookies:
-            setattr(request, 'jwt', self.verify_jwt(request.cookies[self.cookie_name].value))
+            setattr(
+                request, 'jwt', self.verify_jwt(request.cookies[self.cookie_name].value)
+            )
         else:
             setattr(request, 'jwt', None)
 
@@ -52,7 +64,11 @@ class JWTMiddleware(Middleware):
             jwt_cookie = getattr(response, 'jwt_cookie')
             if jwt_cookie:
                 encoded_jwt = self.create_jwt(jwt_cookie)
-                response.set_cookie(self.cookie_name, encoded_jwt.decode('utf-8'), secure=self.cookie_secure)
+                response.set_cookie(
+                    self.cookie_name,
+                    encoded_jwt.decode('utf-8'),
+                    secure=self.cookie_secure,
+                )
             else:
                 response.delete_cookie(self.cookie_name)
 

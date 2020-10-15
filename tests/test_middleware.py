@@ -1,4 +1,9 @@
 import pytest
+from jwt.exceptions import (
+    InvalidAudienceError,
+    InvalidIssuerError,
+    MissingRequiredClaimError,
+)
 
 from rivr.http import Request, Response
 from rivr_jwt import JWTMiddleware
@@ -26,6 +31,66 @@ def test_process_request_decodes_authorization_header(middleware, jwt):
     middleware.process_request(request)
 
     assert request.jwt == {'name': 'Kyle'}
+
+
+def test_process_request_allows_matching_audience():
+    jwt = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJleGFtcGxlLmNvbSJ9.INovSA2CyXeBwzR0Bqq-pFuxfQLVgnFpN4x1JP0Ve84'
+    middleware = JWTMiddleware(key='secret', audience=['example.com'])
+    request = Request(headers={'Authorization': 'Bearer {}'.format(jwt)})
+    middleware.process_request(request)
+
+    assert request.jwt == {'aud': 'example.com'}
+
+
+def test_process_request_disallows_missing_audience(jwt):
+    middleware = JWTMiddleware(key='secret', audience='prod.example.com')
+    request = Request(headers={'Authorization': 'Bearer {}'.format(jwt)})
+
+    with pytest.raises(MissingRequiredClaimError):
+        middleware.process_request(request)
+
+    assert request.jwt == None
+
+
+def test_process_request_disallows_incorrect_audience():
+    jwt = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJleGFtcGxlLmNvbSJ9.INovSA2CyXeBwzR0Bqq-pFuxfQLVgnFpN4x1JP0Ve84'
+    middleware = JWTMiddleware(key='secret', audience='prod.example.com')
+    request = Request(headers={'Authorization': 'Bearer {}'.format(jwt)})
+
+    with pytest.raises(InvalidAudienceError):
+        middleware.process_request(request)
+
+    assert request.jwt == None
+
+
+def test_process_request_allows_matching_issuer():
+    jwt = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJleGFtcGxlLmNvbSJ9.c2lmFOiVCSRyegrYJjx60BzBhacHt3BZ-avr4PtGqWk'
+    middleware = JWTMiddleware(key='secret', issuer='example.com')
+    request = Request(headers={'Authorization': 'Bearer {}'.format(jwt)})
+    middleware.process_request(request)
+
+    assert request.jwt == {'iss': 'example.com'}
+
+
+def test_process_request_disallows_missing_issuer(jwt):
+    middleware = JWTMiddleware(key='secret', issuer='example.com')
+    request = Request(headers={'Authorization': 'Bearer {}'.format(jwt)})
+
+    with pytest.raises(MissingRequiredClaimError):
+        middleware.process_request(request)
+
+    assert request.jwt == None
+
+
+def test_process_request_disallows_incorrect_issuer():
+    jwt = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJleGFtcGxlLmNvbSJ9.c2lmFOiVCSRyegrYJjx60BzBhacHt3BZ-avr4PtGqWk'
+    middleware = JWTMiddleware(key='secret', issuer='prod.example.com')
+    request = Request(headers={'Authorization': 'Bearer {}'.format(jwt)})
+
+    with pytest.raises(InvalidIssuerError):
+        middleware.process_request(request)
+
+    assert request.jwt == None
 
 
 def test_process_request_decodes_cookie(middleware, jwt):

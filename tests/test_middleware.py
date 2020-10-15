@@ -1,45 +1,54 @@
-import unittest
+import pytest
+
 from rivr.http import Request, Response
 from rivr_jwt import JWTMiddleware
 
 
-class JWTMiddlewareTests(unittest.TestCase):
-    def setUp(self):
-        self.middleware = JWTMiddleware(key='secret')
-        self.jwt = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoiS3lsZSJ9.4tCpoxfyfjbUyLjm9_zu-r52Vxn6bFq9kp6Rt9xMs4A'
+@pytest.fixture
+def middleware() -> JWTMiddleware:
+    return JWTMiddleware(key='secret')
 
-    def test_sets_jwt_to_none_when_not_provided(self):
-        request = Request()
-        self.middleware.process_request(request)
 
-        self.assertEqual(request.jwt, None)
+@pytest.fixture
+def jwt() -> str:
+    return 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoiS3lsZSJ9.4tCpoxfyfjbUyLjm9_zu-r52Vxn6bFq9kp6Rt9xMs4A'
 
-    def test_decodes_request_authorization_header(self):
-        request = Request(headers={'AUTHORIZATION': 'Bearer {}'.format(self.jwt)})
-        self.middleware.process_request(request)
 
-        self.assertEqual(request.jwt, {'name': 'Kyle'})
+def test_process_request_sets_empty_jwt_when_none_provided(middleware):
+    request = Request()
+    middleware.process_request(request)
 
-    # Cookies
+    assert request.jwt is None
 
-    def test_decodes_request_cookie(self):
-        request = Request()
-        request.cookies['jwt'] = self.jwt
-        self.middleware.process_request(request)
 
-        self.assertEqual(request.jwt, {'name': 'Kyle'})
+def test_process_request_decodes_authorization_header(middleware, jwt):
+    request = Request(headers={'Authorization': 'Bearer {}'.format(jwt)})
+    middleware.process_request(request)
 
-    def test_encodes_jwt_in_cookie(self):
-        response = Response()
-        response.jwt_cookie = {'name': 'Kyle'}
-        response = self.middleware.process_response(None, response)
+    assert request.jwt == {'name': 'Kyle'}
 
-        self.assertEqual(response.cookies['jwt'].value, self.jwt)
 
-    def test_deletes_jwt_from_cookies_when_unset(self):
-        response = Response()
-        response.jwt_cookie = None
-        response = self.middleware.process_response(None, response)
+def test_process_request_decodes_cookie(middleware, jwt):
+    request = Request()
+    request.cookies['jwt'] = jwt
+    middleware.process_request(request)
 
-        self.assertEqual(response.cookies['jwt'].value, '')
-        self.assertEqual(response.cookies['jwt']['expires'], 'Thu, 01-Jan-1970 00:00:00 GMT')
+    assert request.jwt == {'name': 'Kyle'}
+
+
+def test_process_response_encodes_cookie(middleware, jwt):
+    response = Response()
+    response.jwt_cookie = {'name': 'Kyle'}
+    response = middleware.process_response(Request(), response)
+
+    assert response.cookies['jwt'].value == jwt
+
+
+def test_process_response_unsets_cookie(middleware, jwt):
+    response = Response()
+    response.jwt_cookie = None
+    response = middleware.process_response(Request(), response)
+
+    morsel = response.cookies['jwt']
+    assert morsel.value == ''
+    assert morsel['expires'] == 'Thu, 01-Jan-1970 00:00:00 GMT'

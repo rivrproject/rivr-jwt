@@ -63,6 +63,18 @@ def test_process_request_disallows_incorrect_audience():
     assert request.jwt == None
 
 
+def test_process_request_calls_401_for_invalid_token():
+    jwt = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJleGFtcGxlLmNvbSJ9.INovSA2CyXeBwzR0Bqq-pFuxfQLVgnFpN4x1JP0Ve84'
+    middleware = JWTMiddleware(key='secret', audience='prod.example.com')
+    middleware.custom_401 = lambda r: Response('custom 401')
+
+    request = Request(headers={'Authorization': 'Bearer {}'.format(jwt)})
+    response = middleware.process_request(request)
+
+    assert response.content == 'custom 401'
+    assert request.jwt == None
+
+
 def test_process_request_allows_matching_issuer():
     jwt = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJleGFtcGxlLmNvbSJ9.c2lmFOiVCSRyegrYJjx60BzBhacHt3BZ-avr4PtGqWk'
     middleware = JWTMiddleware(key='secret', issuer='example.com')

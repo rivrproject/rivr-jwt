@@ -1,5 +1,7 @@
-from typing import Dict, Any, Optional, Sequence
+from typing import Dict, Any, Optional, Sequence, Callable
+
 import jwt
+from jwt.exceptions import PyJWTError
 from rivr import Middleware
 from rivr.http import Request, Response
 
@@ -7,6 +9,8 @@ from rivr.http import Request, Response
 class JWTMiddleware(Middleware):
     algorithms = ('HS256',)
     key = None
+
+    custom_401: Optional[Callable[[Request], Response]] = None
 
     audience: Optional[Sequence[str]] = None
     issuer: Optional[str] = None
@@ -26,7 +30,7 @@ class JWTMiddleware(Middleware):
 
         return jwt.encode(payload, self.key, algorithm=self.algorithms[0])
 
-    def verify_jwt(self, encoded_jwt: str):
+    def verify_jwt(self, encoded_jwt: str) -> Dict[Any, Any]:
         """
         Verifies the given JWT token, returning the decoded object, or None.
         """
@@ -49,7 +53,13 @@ class JWTMiddleware(Middleware):
         header = request.headers[self.header_name]
         if header:
             bearer, token = header.split(' ', 1)
-            setattr(request, 'jwt', self.verify_jwt(token))
+
+            try:
+                setattr(request, 'jwt', self.verify_jwt(token))
+            except PyJWTError:
+                if self.custom_401:
+                    return self.custom_401(request)
+                raise
         elif self.cookie_name in request.cookies:
             setattr(
                 request, 'jwt', self.verify_jwt(request.cookies[self.cookie_name].value)

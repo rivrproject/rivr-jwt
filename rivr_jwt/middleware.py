@@ -61,9 +61,14 @@ class JWTMiddleware(Middleware):
                     return self.custom_401(request)
                 raise
         elif self.cookie_name in request.cookies:
-            setattr(
-                request, 'jwt', self.verify_jwt(request.cookies[self.cookie_name].value)
-            )
+            cookie = request.cookies[self.cookie_name].value
+
+            try:
+                setattr(request, 'jwt', self.verify_jwt(cookie))
+            except PyJWTError:
+                # ignore invalid cookies
+                pass
+
         else:
             setattr(request, 'jwt', None)
 

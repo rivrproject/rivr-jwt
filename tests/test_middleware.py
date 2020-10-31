@@ -113,6 +113,14 @@ def test_process_request_decodes_cookie(middleware, jwt):
     assert request.jwt == {'name': 'Kyle'}
 
 
+def test_process_request_ignores_invalid_cookie(middleware, jwt):
+    request = Request()
+    request.cookies['jwt'] = 'a.b.c'
+    middleware.process_request(request)
+
+    assert request.jwt is None
+
+
 def test_process_response_encodes_cookie(middleware, jwt):
     response = Response()
     response.jwt_cookie = {'name': 'Kyle'}

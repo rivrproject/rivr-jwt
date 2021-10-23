@@ -13,7 +13,7 @@ setup(
     },
     install_requires=[
         'rivr>=0.9.0',
-        'PyJWT',
+        'PyJWT>=2.3.0',
     ],
     author='Kyle Fuller',
     author_email='kyle@fuller.li',

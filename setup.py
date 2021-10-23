@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='rivr-jwt',
-    version='0.2.0',
+    version='0.3.0',
     description='Making authentication with JWT (JSON Web Token) and rivr simple.',
     url='https://github.com/rivrproject/rivr-jwt',
     packages=find_packages(),
@@ -18,12 +18,13 @@ setup(
     author='Kyle Fuller',
     author_email='kyle@fuller.li',
     license='BSD',
-    classifiers=(
+    classifiers=[
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'License :: OSI Approved :: BSD License',
-    ),
+    ],
 )
